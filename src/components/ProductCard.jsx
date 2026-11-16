@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleFavoriteApi } from '../redux/userReducer';
 import { ACCESS_TOKEN } from '../services/config';
-import { GOOGLE_SHOE_IMAGES, resolveGoogleProductImage } from '../utils/productImages';
+import { resolveImage, handleImageError } from '../utils/productImages';
 
 export default function ProductCard({ product }) {
   const dispatch = useDispatch();
@@ -11,7 +11,7 @@ export default function ProductCard({ product }) {
   const { productsFavorite } = useSelector((state) => state.userReducer);
 
   const isLiked = productsFavorite?.some((fav) => Number(fav.id) === Number(product.id));
-  const imgUrl = resolveGoogleProductImage(product);
+  const imgUrl = resolveImage(product, product.id);
 
   const handleToggleLike = (e) => {
     e.preventDefault();
@@ -41,10 +41,7 @@ export default function ProductCard({ product }) {
             src={imgUrl}
             alt={product.name}
             loading="lazy"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = GOOGLE_SHOE_IMAGES[0];
-            }}
+            onError={handleImageError}
           />
         </Link>
         <div className="product-info">
@@ -60,7 +57,9 @@ export default function ProductCard({ product }) {
         <Link to={`/detail/${product.id}`} className="btn-buy-now">
           Buy now
         </Link>
-        <span className="product-price">{product.price}$</span>
+        <span className="product-price">
+          {product.price !== undefined && product.price !== null ? `${product.price}$` : ''}
+        </span>
       </div>
     </div>
   );

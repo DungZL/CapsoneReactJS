@@ -1,14 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import {
   getProfileApi,
   updateProfileApi,
   getProductFavoriteApi,
+  uploadAvatarApi,
 } from '../redux/userReducer';
 import { ACCESS_TOKEN } from '../services/config';
-import { GOOGLE_SHOE_IMAGES, resolveGoogleProductImage } from '../utils/productImages';
+import { resolveImage, handleImageError } from '../utils/productImages';
 import ProductCard from '../components/ProductCard';
+import Pagination from '../components/Pagination';
+
+const ORDERS_PER_PAGE = 2;
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB
+const DEFAULT_AVATAR = 'https://i.pravatar.cc/225';
+
+const formatDate = (value) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('vi-VN');
+};
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -17,6 +28,10 @@ export default function Profile() {
   );
 
   const [activeTab, setActiveTab] = useState('orders');
+  const [orderPage, setOrderPage] = useState(1);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     email: '',
     name: '',
@@ -47,6 +62,14 @@ export default function Profile() {
     }
   }, [userProfile]);
 
+  // Giải phóng URL tạm của ảnh preview
+  useEffect(
+    () => () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    },
+    [avatarPreview]
+  );
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -74,7 +97,40 @@ export default function Profile() {
     }
   };
 
+  // Tính năng ẩn: đổi avatar
+  const handleAvatarSelect = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file hình ảnh!');
+      return;
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      alert('Ảnh tối đa 2MB!');
+      return;
+    }
+
+    setAvatarPreview(URL.createObjectURL(file));
+    setUploading(true);
+    const resultAction = await dispatch(uploadAvatarApi(file));
+    setUploading(false);
+    if (uploadAvatarApi.fulfilled.match(resultAction)) {
+      setAvatarPreview(null);
+      alert('Đổi avatar thành công!');
+    } else {
+      setAvatarPreview(null);
+      alert(resultAction.payload || 'Đổi avatar thất bại!');
+    }
+  };
+
   const ordersHistory = userProfile?.ordersHistory || [];
+  const totalOrderPages = Math.ceil(ordersHistory.length / ORDERS_PER_PAGE);
+  const safeOrderPage = Math.min(orderPage, Math.max(totalOrderPages, 1));
+  const visibleOrders = ordersHistory.slice(
+    (safeOrderPage - 1) * ORDERS_PER_PAGE,
+    safeOrderPage * ORDERS_PER_PAGE
+  );
 
   return (
     <div className="profile-page">
@@ -85,10 +141,33 @@ export default function Profile() {
       <div className="container">
         <div className="profile-top-section">
           <div className="profile-avatar-col">
-            <img
-              src={userProfile?.avatar || 'https://i.pravatar.cc/225'}
-              alt={userProfile?.name || 'User Avatar'}
-              className="profile-avatar"
+            <button
+              type="button"
+              className={`avatar-upload ${uploading ? 'uploading' : ''}`}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              title="Đổi avatar"
+            >
+              <img
+                src={avatarPreview || userProfile?.avatar || DEFAULT_AVATAR}
+                alt={userProfile?.name || 'User Avatar'}
+                className="profile-avatar"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = DEFAULT_AVATAR;
+                }}
+              />
+              <span className="avatar-overlay">
+                <i className="fa-solid fa-camera"></i>
+                {uploading ? 'Đang tải...' : 'Đổi avatar'}
+              </span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleAvatarSelect}
             />
           </div>
 
@@ -169,9 +248,14 @@ export default function Profile() {
                 </label>
               </div>
 
-              <button type="submit" className="btn-submit-purple">
-                Update
-              </button>
+              <div className="profile-buttons">
+                <Link to="/change-password" className="btn-outline-purple">
+                  Change password
+                </Link>
+                <button type="submit" className="btn-submit-purple">
+                  Update
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -200,51 +284,55 @@ export default function Profile() {
             {ordersHistory.length === 0 ? (
               <p className="empty-text">Chưa có lịch sử đặt hàng.</p>
             ) : (
-              ordersHistory.map((order) => (
-                <div key={order.id} className="order-block">
-                  <p className="order-date-note">
-                    + Orders have been placed on {order.date}
-                  </p>
-                  <div className="table-responsive">
-                    <table className="carts-table order-table">
-                      <thead>
-                        <tr>
-                          <th>id</th>
-                          <th>img</th>
-                          <th>name</th>
-                          <th>price</th>
-                          <th>quantity</th>
-                          <th>total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {order.orderDetail?.map((detail, idx) => (
-                          <tr key={`${order.id}-${idx}`}>
-                            <td>{order.id}</td>
-                            <td>
-                              <img
-                                src={resolveGoogleProductImage(detail)}
-                                alt={detail.name}
-                                className="table-product-img"
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = GOOGLE_SHOE_IMAGES[0];
-                                }}
-                              />
-                            </td>
-                            <td>{detail.name}</td>
-                            <td>{detail.price}</td>
-                            <td>
-                              <span className="qty-display">{detail.quantity || 1}</span>
-                            </td>
-                            <td>{detail.price * (detail.quantity || 1)}</td>
+              <>
+                {visibleOrders.map((order) => (
+                  <div key={order.id} className="order-block">
+                    <p className="order-date-note">
+                      + Orders have been placed on {formatDate(order.date)}
+                    </p>
+                    <div className="table-responsive">
+                      <table className="carts-table order-table">
+                        <thead>
+                          <tr>
+                            <th>order id</th>
+                            <th>img</th>
+                            <th>name</th>
+                            <th>price</th>
+                            <th>quantity</th>
+                            <th>total</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {order.orderDetail?.map((detail, idx) => (
+                            <tr key={`${order.id}-${idx}`}>
+                              <td>{order.id}</td>
+                              <td>
+                                <img
+                                  src={resolveImage(detail, idx)}
+                                  alt={detail.name}
+                                  className="table-product-img"
+                                  onError={handleImageError}
+                                />
+                              </td>
+                              <td>{detail.name}</td>
+                              <td>{detail.price}</td>
+                              <td>
+                                <span className="qty-display">{detail.quantity || 1}</span>
+                              </td>
+                              <td>{detail.price * (detail.quantity || 1)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+                <Pagination
+                  current={safeOrderPage}
+                  total={totalOrderPages}
+                  onChange={setOrderPage}
+                />
+              </>
             )}
           </div>
         ) : (
@@ -254,14 +342,7 @@ export default function Profile() {
             ) : (
               <div className="product-grid">
                 {productsFavorite.map((fav) => (
-                  <ProductCard
-                    key={fav.id}
-                    product={{
-                      ...fav,
-                      price: fav.price || 85,
-                      shortDescription: fav.shortDescription || '',
-                    }}
-                  />
+                  <ProductCard key={fav.id} product={fav} />
                 ))}
               </div>
             )}

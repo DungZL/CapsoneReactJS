@@ -1,9 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { http, ACCESS_TOKEN, USER_LOGIN, CART_STORAGE } from '../services/config';
-import {
-  normalizeProductListWithGoogleImage,
-  resolveGoogleProductImage,
-} from '../utils/productImages';
+import { resolveImage } from '../utils/productImages';
 
 const getStoredJson = (key, fallback) => {
   try {
@@ -14,6 +11,16 @@ const getStoredJson = (key, fallback) => {
   }
 };
 
+const messageOf = (error, fallback) => error.response?.data?.message || fallback;
+
+// Mỗi dòng giỏ hàng = 1 sản phẩm + 1 size
+export const cartKeyOf = (id, size) => (size ? `${id}_${size}` : String(id));
+
+const saveLogin = (content) => {
+  localStorage.setItem(ACCESS_TOKEN, content.accessToken);
+  localStorage.setItem(USER_LOGIN, JSON.stringify(content));
+};
+
 // POST /api/Users/signup (Register)
 export const signupApi = createAsyncThunk(
   'user/signupApi',
@@ -22,7 +29,7 @@ export const signupApi = createAsyncThunk(
       const result = await http.post('/Users/signup', userRegister);
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Đăng ký thất bại!');
+      return rejectWithValue(messageOf(error, 'Đăng ký thất bại!'));
     }
   }
 );
@@ -33,12 +40,10 @@ export const signinApi = createAsyncThunk(
   async (userLogin, { rejectWithValue }) => {
     try {
       const result = await http.post('/Users/signin', userLogin);
-      const content = result.data.content;
-      localStorage.setItem(ACCESS_TOKEN, content.accessToken);
-      localStorage.setItem(USER_LOGIN, JSON.stringify(content));
-      return content;
+      saveLogin(result.data.content);
+      return result.data.content;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Email hoặc mật khẩu không đúng!');
+      return rejectWithValue(messageOf(error, 'Email hoặc mật khẩu không đúng!'));
     }
   }
 );
@@ -49,17 +54,16 @@ export const facebookLoginApi = createAsyncThunk(
   async (facebookToken, { rejectWithValue }) => {
     try {
       const result = await http.post('/Users/facebooklogin', { facebookToken });
-      const content = result.data.content;
-      localStorage.setItem(ACCESS_TOKEN, content.accessToken);
-      localStorage.setItem(USER_LOGIN, JSON.stringify(content));
-      return content;
+      saveLogin(result.data.content);
+      return result.data.content;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Đăng nhập Facebook thất bại!');
+      return rejectWithValue(messageOf(error, 'Đăng nhập Facebook thất bại!'));
     }
   }
 );
 
 // POST /api/Users/getProfile (Profile)
+// Đề ghi getProfileV2 nhưng server hiện trả 404 cho endpoint đó, swagger chỉ còn getProfile.
 export const getProfileApi = createAsyncThunk(
   'user/getProfileApi',
   async (_, { rejectWithValue }) => {
@@ -67,7 +71,7 @@ export const getProfileApi = createAsyncThunk(
       const result = await http.post('/Users/getProfile');
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Không thể tải thông tin cá nhân!');
+      return rejectWithValue(messageOf(error, 'Không thể tải thông tin cá nhân!'));
     }
   }
 );
@@ -81,7 +85,36 @@ export const updateProfileApi = createAsyncThunk(
       await dispatch(getProfileApi());
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Cập nhật thông tin thất bại!');
+      return rejectWithValue(messageOf(error, 'Cập nhật thông tin thất bại!'));
+    }
+  }
+);
+
+// POST /api/Users/changePassword { newPassword } (Tính năng ẩn: đổi mật khẩu)
+export const changePasswordApi = createAsyncThunk(
+  'user/changePasswordApi',
+  async (newPassword, { rejectWithValue }) => {
+    try {
+      const result = await http.post('/Users/changePassword', { newPassword });
+      return result.data.content;
+    } catch (error) {
+      return rejectWithValue(messageOf(error, 'Đổi mật khẩu thất bại!'));
+    }
+  }
+);
+
+// POST /api/Users/uploadavatar (multipart/form-data) (Tính năng ẩn: đổi avatar)
+export const uploadAvatarApi = createAsyncThunk(
+  'user/uploadAvatarApi',
+  async (file, { dispatch, rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const result = await http.post('/Users/uploadavatar', formData);
+      await dispatch(getProfileApi());
+      return result.data.content;
+    } catch (error) {
+      return rejectWithValue(messageOf(error, 'Đổi avatar thất bại!'));
     }
   }
 );
@@ -91,12 +124,11 @@ export const getProductFavoriteApi = createAsyncThunk(
   'user/getProductFavoriteApi',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem(ACCESS_TOKEN);
-      if (!token) return { productsFavorite: [] };
+      if (!localStorage.getItem(ACCESS_TOKEN)) return { productsFavorite: [] };
       const result = await http.get('/Users/getproductfavorite');
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+      return rejectWithValue(messageOf(error, error.message));
     }
   }
 );
@@ -106,36 +138,42 @@ export const toggleFavoriteApi = createAsyncThunk(
   'user/toggleFavoriteApi',
   async ({ productId, isLiked }, { dispatch, rejectWithValue }) => {
     try {
-      const endpoint = isLiked
-        ? `/Users/unlike?productId=${productId}`
-        : `/Users/like?productId=${productId}`;
-      await http.get(endpoint);
+      const endpoint = isLiked ? 'unlike' : 'like';
+      await http.get(`/Users/${endpoint}?productId=${productId}`);
       await dispatch(getProductFavoriteApi());
       return { productId, isLiked: !isLiked };
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+      return rejectWithValue(messageOf(error, error.message));
     }
   }
 );
 
 // POST /api/Users/order (Carts)
+// arg: { payload: { orderDetail, email }, keys: [cartKey...] }
 export const submitOrderApi = createAsyncThunk(
   'user/submitOrderApi',
-  async (orderPayload, { rejectWithValue }) => {
+  async ({ payload }, { rejectWithValue }) => {
     try {
-      const result = await http.post('/Users/order', orderPayload);
+      const result = await http.post('/Users/order', payload);
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Đặt hàng thất bại!');
+      return rejectWithValue(messageOf(error, 'Đặt hàng thất bại!'));
     }
   }
 );
+
+// Giỏ hàng cũ (trước khi có size) chưa có key -> bổ sung
+const loadCarts = () =>
+  getStoredJson(CART_STORAGE, []).map((item) => ({
+    ...item,
+    key: item.key || cartKeyOf(item.id, item.size),
+  }));
 
 const initialState = {
   userLogin: getStoredJson(USER_LOGIN, null),
   userProfile: null,
   productsFavorite: [],
-  carts: getStoredJson(CART_STORAGE, []),
+  carts: loadCarts(),
   loading: false,
   error: null,
 };
@@ -143,6 +181,8 @@ const initialState = {
 const saveCarts = (carts) => {
   localStorage.setItem(CART_STORAGE, JSON.stringify(carts));
 };
+
+const findCartItem = (state, key) => state.carts.find((item) => item.key === key);
 
 const userReducer = createSlice({
   name: 'userReducer',
@@ -156,51 +196,47 @@ const userReducer = createSlice({
       localStorage.removeItem(USER_LOGIN);
     },
     addToCartAction: (state, action) => {
-      const { product, quantity } = action.payload;
-      const index = state.carts.findIndex((item) => item.id === product.id);
-      if (index !== -1) {
-        state.carts[index].quantity += quantity;
-        state.carts[index].image = resolveGoogleProductImage(product);
+      const { product, quantity, size } = action.payload;
+      const key = cartKeyOf(product.id, size);
+      const existing = findCartItem(state, key);
+      if (existing) {
+        existing.quantity += quantity;
       } else {
         state.carts.push({
+          key,
           id: product.id,
           name: product.name,
           price: product.price,
-          image: resolveGoogleProductImage(product),
-          quantity: quantity,
+          image: resolveImage(product, product.id),
+          size: size ?? null,
+          quantity,
           checked: true,
         });
       }
       saveCarts(state.carts);
     },
     changeCartQuantityAction: (state, action) => {
-      const { id, delta } = action.payload;
-      const index = state.carts.findIndex((item) => item.id === id);
-      if (index !== -1) {
-        const nextQty = state.carts[index].quantity + delta;
-        if (nextQty >= 1) {
-          state.carts[index].quantity = nextQty;
-        }
+      const { key, delta } = action.payload;
+      const item = findCartItem(state, key);
+      if (item && item.quantity + delta >= 1) {
+        item.quantity += delta;
+        saveCarts(state.carts);
       }
-      saveCarts(state.carts);
     },
     deleteCartItemAction: (state, action) => {
-      const id = action.payload;
-      state.carts = state.carts.filter((item) => item.id !== id);
+      state.carts = state.carts.filter((item) => item.key !== action.payload);
       saveCarts(state.carts);
     },
     toggleCheckCartItemAction: (state, action) => {
-      const id = action.payload;
-      const index = state.carts.findIndex((item) => item.id === id);
-      if (index !== -1) {
-        state.carts[index].checked = !state.carts[index].checked;
+      const item = findCartItem(state, action.payload);
+      if (item) {
+        item.checked = !item.checked;
+        saveCarts(state.carts);
       }
-      saveCarts(state.carts);
     },
     toggleCheckAllCartAction: (state, action) => {
-      const checked = action.payload;
       state.carts.forEach((item) => {
-        item.checked = checked;
+        item.checked = action.payload;
       });
       saveCarts(state.carts);
     },
@@ -229,17 +265,6 @@ const userReducer = createSlice({
       .addCase(getProfileApi.fulfilled, (state, action) => {
         state.loading = false;
         const profile = action.payload;
-        if (profile && Array.isArray(profile.ordersHistory)) {
-          profile.ordersHistory = profile.ordersHistory.map((order) => ({
-            ...order,
-            orderDetail: Array.isArray(order.orderDetail)
-              ? order.orderDetail.map((item) => ({
-                  ...item,
-                  image: resolveGoogleProductImage(item),
-                }))
-              : [],
-          }));
-        }
         state.userProfile = profile;
         if (profile?.email && state.userLogin) {
           state.userLogin = { ...state.userLogin, email: profile.email };
@@ -251,13 +276,11 @@ const userReducer = createSlice({
         state.error = action.payload;
       })
       .addCase(getProductFavoriteApi.fulfilled, (state, action) => {
-        state.productsFavorite = normalizeProductListWithGoogleImage(
-          action.payload?.productsFavorite || []
-        );
+        state.productsFavorite = action.payload?.productsFavorite || [];
       })
       .addCase(submitOrderApi.fulfilled, (state, action) => {
-        const orderedIds = action.meta.arg.orderDetail.map((d) => Number(d.productId));
-        state.carts = state.carts.filter((item) => !orderedIds.includes(Number(item.id)));
+        const orderedKeys = action.meta.arg.keys;
+        state.carts = state.carts.filter((item) => !orderedKeys.includes(item.key));
         saveCarts(state.carts);
       });
   },

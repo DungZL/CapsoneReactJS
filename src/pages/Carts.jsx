@@ -10,7 +10,7 @@ import {
   getProfileApi,
 } from '../redux/userReducer';
 import { ACCESS_TOKEN } from '../services/config';
-import { GOOGLE_SHOE_IMAGES, resolveGoogleProductImage } from '../utils/productImages';
+import { resolveImage, handleImageError } from '../utils/productImages';
 
 export default function Carts() {
   const dispatch = useDispatch();
@@ -57,7 +57,8 @@ export default function Carts() {
       email,
     };
 
-    const actionResult = await dispatch(submitOrderApi(payload));
+    const keys = selectedItems.map((item) => item.key);
+    const actionResult = await dispatch(submitOrderApi({ payload, keys }));
     if (submitOrderApi.fulfilled.match(actionResult)) {
       alert('Đặt hàng thành công!');
       navigate('/profile');
@@ -86,6 +87,7 @@ export default function Carts() {
               <th>id</th>
               <th>img</th>
               <th>name</th>
+              <th>size</th>
               <th>price</th>
               <th>quantity</th>
               <th>total</th>
@@ -95,33 +97,31 @@ export default function Carts() {
           <tbody>
             {carts.length === 0 ? (
               <tr>
-                <td colSpan="8" className="empty-cart-cell">
+                <td colSpan="9" className="empty-cart-cell">
                   Giỏ hàng trống.
                 </td>
               </tr>
             ) : (
               carts.map((item) => (
-                <tr key={item.id}>
+                <tr key={item.key}>
                   <td>
                     <input
                       type="checkbox"
                       checked={Boolean(item.checked)}
-                      onChange={() => dispatch(toggleCheckCartItemAction(item.id))}
+                      onChange={() => dispatch(toggleCheckCartItemAction(item.key))}
                     />
                   </td>
                   <td>{item.id}</td>
                   <td>
                     <img
-                      src={resolveGoogleProductImage(item)}
+                      src={resolveImage(item, item.id)}
                       alt={item.name}
                       className="table-product-img"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = GOOGLE_SHOE_IMAGES[0];
-                      }}
+                      onError={handleImageError}
                     />
                   </td>
                   <td>{item.name}</td>
+                  <td>{item.size ?? '-'}</td>
                   <td>{item.price}</td>
                   <td>
                     <div className="table-qty-group">
@@ -129,7 +129,7 @@ export default function Carts() {
                         type="button"
                         className="btn-qty-sm"
                         onClick={() =>
-                          dispatch(changeCartQuantityAction({ id: item.id, delta: 1 }))
+                          dispatch(changeCartQuantityAction({ key: item.key, delta: 1 }))
                         }
                       >
                         +
@@ -139,7 +139,7 @@ export default function Carts() {
                         type="button"
                         className="btn-qty-sm"
                         onClick={() =>
-                          dispatch(changeCartQuantityAction({ id: item.id, delta: -1 }))
+                          dispatch(changeCartQuantityAction({ key: item.key, delta: -1 }))
                         }
                       >
                         -
@@ -159,7 +159,7 @@ export default function Carts() {
                       <button
                         type="button"
                         className="btn-delete"
-                        onClick={() => dispatch(deleteCartItemAction(item.id))}
+                        onClick={() => dispatch(deleteCartItemAction(item.key))}
                       >
                         DELETE
                       </button>

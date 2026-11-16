@@ -1,16 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
-import { getProductsApi } from '../redux/productReducer';
+import { Link, useSearchParams } from 'react-router-dom';
+import {
+  getProductsApi,
+  getProductPagingApi,
+  getRecommendedByFavoriteApi,
+} from '../redux/productReducer';
 import { getProductFavoriteApi } from '../redux/userReducer';
 import { ACCESS_TOKEN } from '../services/config';
-import { GOOGLE_SHOE_IMAGES, resolveGoogleProductImage } from '../utils/productImages';
+import { resolveImage, handleImageError } from '../utils/productImages';
 import ProductCard from '../components/ProductCard';
+import Pagination from '../components/Pagination';
+
+const PAGE_SIZE = 9;
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { arrProduct, loading } = useSelector((state) => state.productReducer);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { arrProduct, paging, pagingLoading, recommended } = useSelector(
+    (state) => state.productReducer
+  );
+  const { productsFavorite, userLogin } = useSelector((state) => state.userReducer);
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  const pageIndex = Math.max(1, Number(searchParams.get('page')) || 1);
+  const isLoggedIn = Boolean(userLogin && localStorage.getItem(ACCESS_TOKEN));
 
   useEffect(() => {
     dispatch(getProductsApi(''));
@@ -19,7 +33,21 @@ export default function Index() {
     }
   }, [dispatch]);
 
+  // Tính năng ẩn: phân trang sản phẩm bằng API getpaging
+  useEffect(() => {
+    dispatch(getProductPagingApi({ pageIndex, pageSize: PAGE_SIZE }));
+  }, [pageIndex, dispatch]);
+
+  // Tính năng ẩn: sản phẩm theo danh mục yêu thích
+  useEffect(() => {
+    if (isLoggedIn && productsFavorite.length) {
+      dispatch(getRecommendedByFavoriteApi(productsFavorite));
+    }
+  }, [isLoggedIn, productsFavorite, dispatch]);
+
   const carouselItems = arrProduct.slice(0, 4);
+  const activeBanner = carouselItems[currentSlide];
+  const totalPages = Math.ceil((paging.totalRow || 0) / PAGE_SIZE);
 
   const handlePrev = () => {
     if (!carouselItems.length) return;
@@ -31,7 +59,10 @@ export default function Index() {
     setCurrentSlide((prev) => (prev === carouselItems.length - 1 ? 0 : prev + 1));
   };
 
-  const activeBanner = carouselItems[currentSlide];
+  const handlePageChange = (page) => {
+    setSearchParams(page === 1 ? {} : { page: String(page) });
+    document.getElementById('product-feature')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <div className="index-page">
@@ -49,12 +80,9 @@ export default function Index() {
           <div className="container carousel-inner">
             <div className="carousel-image">
               <img
-                src={resolveGoogleProductImage(activeBanner)}
+                src={resolveImage(activeBanner, activeBanner.id)}
                 alt={activeBanner.name}
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = GOOGLE_SHOE_IMAGES[0];
-                }}
+                onError={handleImageError}
               />
             </div>
             <div className="carousel-info">
@@ -89,21 +117,41 @@ export default function Index() {
         </section>
       )}
 
+      {/* Gợi ý theo danh mục yêu thích (chỉ khi đã đăng nhập và có sản phẩm yêu thích) */}
+      {isLoggedIn && productsFavorite.length > 0 && recommended.items.length > 0 && (
+        <section className="product-feature-section">
+          <div className="section-heading-banner">
+            <h2>Recommended for you</h2>
+          </div>
+          <div className="container">
+            <p className="section-note">
+              Vì bạn thích sản phẩm thuộc danh mục <strong>{recommended.category?.name}</strong>
+            </p>
+            <div className="product-grid">
+              {recommended.items.slice(0, 6).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Product Feature Section */}
-      <section className="product-feature-section">
+      <section className="product-feature-section" id="product-feature">
         <div className="section-heading-banner">
           <h2>Product Feature</h2>
         </div>
         <div className="container">
-          {loading ? (
+          {pagingLoading && !paging.items.length ? (
             <div className="loading-state">Loading products...</div>
           ) : (
-            <div className="product-grid">
-              {arrProduct.map((product) => (
+            <div className={`product-grid ${pagingLoading ? 'is-loading' : ''}`}>
+              {paging.items.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
+          <Pagination current={pageIndex} total={totalPages} onChange={handlePageChange} />
         </div>
       </section>
     </div>

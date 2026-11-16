@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getProductByIdApi } from '../redux/productReducer';
 import { addToCartAction, getProductFavoriteApi } from '../redux/userReducer';
 import { ACCESS_TOKEN } from '../services/config';
-import { GOOGLE_SHOE_IMAGES, resolveGoogleProductImage } from '../utils/productImages';
+import { resolveImage, handleImageError } from '../utils/productImages';
 import ProductCard from '../components/ProductCard';
 
 export default function Detail() {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { productDetail, loading } = useSelector((state) => state.productReducer);
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -24,9 +25,7 @@ export default function Detail() {
   }, [id, dispatch]);
 
   useEffect(() => {
-    if (productDetail?.size?.length) {
-      setSelectedSize(productDetail.size[0]);
-    }
+    setSelectedSize(productDetail?.size?.length ? productDetail.size[0] : null);
   }, [productDetail]);
 
   const handleIncrease = () => {
@@ -39,12 +38,19 @@ export default function Detail() {
 
   const handleAddToCart = () => {
     if (!productDetail) return;
+    if (!localStorage.getItem(ACCESS_TOKEN)) {
+      alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
+      navigate('/login');
+      return;
+    }
     dispatch(
       addToCartAction({
         product: productDetail,
         quantity,
+        size: selectedSize,
       })
     );
+    alert(`Đã thêm ${quantity} x ${productDetail.name}${selectedSize ? ` (size ${selectedSize})` : ''} vào giỏ hàng!`);
   };
 
   if (loading && !productDetail) {
@@ -60,12 +66,9 @@ export default function Detail() {
       <section className="container detail-top">
         <div className="detail-image-box">
           <img
-            src={resolveGoogleProductImage(productDetail)}
+            src={resolveImage(productDetail, productDetail.id)}
             alt={productDetail.name}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = GOOGLE_SHOE_IMAGES[0];
-            }}
+            onError={handleImageError}
           />
         </div>
         <div className="detail-info-box">
@@ -107,7 +110,7 @@ export default function Detail() {
       </section>
 
       <section className="container related-products-section">
-        <h2 className="related-heading">-Realate Product -</h2>
+        <h2 className="related-heading">- Related Product -</h2>
         <div className="product-grid">
           {productDetail.relatedProducts?.map((relItem) => (
             <ProductCard key={relItem.id} product={relItem} />

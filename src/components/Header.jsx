@@ -85,6 +85,12 @@ export default function Header() {
           <NavLink to="/search?category=ADIDAS" className="nav-item">
             Sport
           </NavLink>
+          <NavLink
+            to="/stores"
+            className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+          >
+            Stores
+          </NavLink>
         </div>
       </nav>
     </header>

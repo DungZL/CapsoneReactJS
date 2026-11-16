@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import HomeTemplate from './templates/HomeTemplate';
 import Index from './pages/Index';
@@ -8,6 +8,9 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Search from './pages/Search';
+import ChangePassword from './pages/ChangePassword';
+// Trang bản đồ dùng Leaflet khá nặng -> tải khi cần
+const Stores = lazy(() => import('./pages/Stores'));
 
 export default function App() {
   return (
@@ -24,6 +27,15 @@ export default function App() {
           <Route path="login" element={<Login />} />
           <Route path="profile" element={<Profile />} />
           <Route path="search" element={<Search />} />
+          <Route path="change-password" element={<ChangePassword />} />
+          <Route
+            path="stores"
+            element={
+              <Suspense fallback={<div className="container loading-state">Loading map...</div>}>
+                <Stores />
+              </Suspense>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
