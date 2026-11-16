@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from '../components/Toast';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { signupApi } from '../redux/userReducer';
@@ -82,10 +83,10 @@ export default function Register() {
 
     const resultAction = await dispatch(signupApi(payload));
     if (signupApi.fulfilled.match(resultAction)) {
-      alert('Đăng ký tài khoản thành công!');
+      toast.success('Đăng ký tài khoản thành công!');
       navigate('/login');
     } else {
-      alert(resultAction.payload || 'Đăng ký thất bại!');
+      toast.error(resultAction.payload || 'Đăng ký thất bại!');
     }
   };
 
@@ -125,7 +126,8 @@ export default function Register() {
                   type="button"
                   className="eye-btn"
                   onClick={() => setShowPass(!showPass)}
-                  aria-label="Toggle password visibility"
+                  aria-label={showPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                  aria-pressed={showPass}
                 >
                   <i className={`fa-regular ${showPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                 </button>
@@ -148,7 +150,8 @@ export default function Register() {
                   type="button"
                   className="eye-btn"
                   onClick={() => setShowConfirmPass(!showConfirmPass)}
-                  aria-label="Toggle confirm password visibility"
+                  aria-label={showConfirmPass ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}
+                  aria-pressed={showConfirmPass}
                 >
                   <i className={`fa-regular ${showConfirmPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                 </button>

@@ -65,6 +65,7 @@ export default function Stores() {
             type="text"
             className="stores-search"
             placeholder="Tìm cửa hàng, địa chỉ..."
+            aria-label="Tìm cửa hàng"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
@@ -83,7 +84,7 @@ export default function Stores() {
                 >
                   <img
                     src={resolveImage(store, store.id)}
-                    alt={store.name}
+                    alt={store.name || 'Cửa hàng'}
                     onError={handleImageError}
                   />
                   <span>

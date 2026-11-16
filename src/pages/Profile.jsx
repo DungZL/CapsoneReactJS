@@ -7,6 +7,7 @@ import {
   getProductFavoriteApi,
   uploadAvatarApi,
 } from '../redux/userReducer';
+import { toast } from '../components/Toast';
 import { ACCESS_TOKEN } from '../services/config';
 import { resolveImage, handleImageError } from '../utils/productImages';
 import ProductCard from '../components/ProductCard';
@@ -91,9 +92,9 @@ export default function Profile() {
 
     const resultAction = await dispatch(updateProfileApi(payload));
     if (updateProfileApi.fulfilled.match(resultAction)) {
-      alert('Cập nhật thông tin thành công!');
+      toast.success('Cập nhật thông tin thành công!');
     } else {
-      alert(resultAction.payload || 'Cập nhật thất bại!');
+      toast.error(resultAction.payload || 'Cập nhật thất bại!');
     }
   };
 
@@ -103,11 +104,11 @@ export default function Profile() {
     e.target.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert('Vui lòng chọn file hình ảnh!');
+      toast.error('Vui lòng chọn file hình ảnh!');
       return;
     }
     if (file.size > MAX_AVATAR_SIZE) {
-      alert('Ảnh tối đa 2MB!');
+      toast.error('Ảnh tối đa 2MB!');
       return;
     }
 
@@ -117,11 +118,20 @@ export default function Profile() {
     setUploading(false);
     if (uploadAvatarApi.fulfilled.match(resultAction)) {
       setAvatarPreview(null);
-      alert('Đổi avatar thành công!');
+      toast.success('Đổi avatar thành công!');
     } else {
       setAvatarPreview(null);
-      alert(resultAction.payload || 'Đổi avatar thất bại!');
+      toast.error(resultAction.payload || 'Đổi avatar thất bại!');
     }
+  };
+
+  // Phím mũi tên trái/phải chuyển tab (mẫu ARIA tabs)
+  const handleTabKeyDown = (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const next = activeTab === 'orders' ? 'favourite' : 'orders';
+    setActiveTab(next);
+    document.getElementById(`tab-${next}`)?.focus();
   };
 
   const ordersHistory = userProfile?.ordersHistory || [];
@@ -262,25 +272,42 @@ export default function Profile() {
 
         <hr className="page-divider" />
 
-        <div className="profile-tabs">
+        <div className="profile-tabs" role="tablist" aria-label="Thông tin tài khoản">
           <button
             type="button"
+            role="tab"
+            id="tab-orders"
+            aria-selected={activeTab === 'orders'}
+            aria-controls="panel-orders"
+            tabIndex={activeTab === 'orders' ? 0 : -1}
             className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
             onClick={() => setActiveTab('orders')}
+            onKeyDown={handleTabKeyDown}
           >
             Order history
           </button>
           <button
             type="button"
+            role="tab"
+            id="tab-favourite"
+            aria-selected={activeTab === 'favourite'}
+            aria-controls="panel-favourite"
+            tabIndex={activeTab === 'favourite' ? 0 : -1}
             className={`tab-btn ${activeTab === 'favourite' ? 'active' : ''}`}
             onClick={() => setActiveTab('favourite')}
+            onKeyDown={handleTabKeyDown}
           >
             Favourite
           </button>
         </div>
 
         {activeTab === 'orders' ? (
-          <div className="order-history-list">
+          <div
+            className="order-history-list"
+            role="tabpanel"
+            id="panel-orders"
+            aria-labelledby="tab-orders"
+          >
             {ordersHistory.length === 0 ? (
               <p className="empty-text">Chưa có lịch sử đặt hàng.</p>
             ) : (
@@ -309,7 +336,7 @@ export default function Profile() {
                               <td>
                                 <img
                                   src={resolveImage(detail, idx)}
-                                  alt={detail.name}
+                                  alt={detail.name || 'Sản phẩm giày'}
                                   className="table-product-img"
                                   onError={handleImageError}
                                 />
@@ -336,7 +363,12 @@ export default function Profile() {
             )}
           </div>
         ) : (
-          <div className="favourite-list-section">
+          <div
+            className="favourite-list-section"
+            role="tabpanel"
+            id="panel-favourite"
+            aria-labelledby="tab-favourite"
+          >
             {productsFavorite.length === 0 ? (
               <p className="empty-text">Chưa có sản phẩm yêu thích.</p>
             ) : (

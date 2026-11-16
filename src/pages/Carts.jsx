@@ -9,6 +9,7 @@ import {
   submitOrderApi,
   getProfileApi,
 } from '../redux/userReducer';
+import { toast } from '../components/Toast';
 import { ACCESS_TOKEN } from '../services/config';
 import { resolveImage, handleImageError } from '../utils/productImages';
 
@@ -39,13 +40,13 @@ export default function Carts() {
   const handleSubmitOrder = async () => {
     const selectedItems = carts.filter((item) => item.checked);
     if (selectedItems.length === 0) {
-      alert('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng!');
+      toast('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng!');
       return;
     }
 
     const email = userLogin?.email || userProfile?.email;
     if (!email) {
-      alert('Không tìm thấy thông tin email tài khoản, vui lòng đăng nhập lại!');
+      toast.error('Không tìm thấy thông tin email tài khoản, vui lòng đăng nhập lại!');
       return;
     }
 
@@ -60,10 +61,10 @@ export default function Carts() {
     const keys = selectedItems.map((item) => item.key);
     const actionResult = await dispatch(submitOrderApi({ payload, keys }));
     if (submitOrderApi.fulfilled.match(actionResult)) {
-      alert('Đặt hàng thành công!');
+      toast.success('Đặt hàng thành công!');
       navigate('/profile');
     } else {
-      alert(actionResult.payload || 'Đặt hàng thất bại!');
+      toast.error(actionResult.payload || 'Đặt hàng thất bại!');
     }
   };
 
@@ -115,7 +116,7 @@ export default function Carts() {
                   <td>
                     <img
                       src={resolveImage(item, item.id)}
-                      alt={item.name}
+                      alt={item.name || 'Sản phẩm giày'}
                       className="table-product-img"
                       onError={handleImageError}
                     />

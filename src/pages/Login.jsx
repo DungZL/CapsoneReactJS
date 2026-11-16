@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from '../components/Toast';
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { signinApi, facebookLoginApi } from '../redux/userReducer';
@@ -78,13 +79,13 @@ export default function Login() {
     if (signinApi.fulfilled.match(resultAction)) {
       navigate('/profile');
     } else {
-      alert(resultAction.payload || 'Đăng nhập thất bại!');
+      toast.error(resultAction.payload || 'Đăng nhập thất bại!');
     }
   };
 
   const handleFacebookLogin = () => {
     if (!window.FB) {
-      alert('Facebook SDK đang tải hoặc bị chặn bởi trình duyệt.');
+      toast.error('Facebook SDK đang tải hoặc bị chặn bởi trình duyệt.');
       return;
     }
 
@@ -97,7 +98,7 @@ export default function Login() {
           if (facebookLoginApi.fulfilled.match(resultAction)) {
             navigate('/profile');
           } else {
-            alert(resultAction.payload || 'Đăng nhập Facebook thất bại!');
+            toast.error(resultAction.payload || 'Đăng nhập Facebook thất bại!');
           }
         }
       },
@@ -139,7 +140,8 @@ export default function Login() {
               type="button"
               className="eye-btn"
               onClick={() => setShowPass(!showPass)}
-              aria-label="Toggle password visibility"
+              aria-label={showPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-pressed={showPass}
             >
               <i className={`fa-regular ${showPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
             </button>

@@ -7,25 +7,25 @@ export default function Footer() {
       <div className="footer-top">
         <div className="container footer-grid">
           <div className="footer-col">
-            <h4>GET HELP</h4>
+            <h2>GET HELP</h2>
             <ul>
               <li><Link to="/">Home</Link></li>
               <li><Link to="/search?category=NIKE">Nike</Link></li>
               <li><Link to="/search?category=ADIDAS">Adidas</Link></li>
-              <li><Link to="/">Contact</Link></li>
+              <li>Contact</li>
             </ul>
           </div>
           <div className="footer-col">
-            <h4>SUPPORT</h4>
+            <h2>SUPPORT</h2>
             <ul>
-              <li><Link to="/">About</Link></li>
-              <li><Link to="/">Contact</Link></li>
-              <li><Link to="/">Help</Link></li>
-              <li><Link to="/">Phone</Link></li>
+              <li>About</li>
+              <li>Contact</li>
+              <li>Help</li>
+              <li>Phone</li>
             </ul>
           </div>
           <div className="footer-col">
-            <h4>REGISTER</h4>
+            <h2>REGISTER</h2>
             <ul>
               <li><Link to="/register">register</Link></li>
               <li><Link to="/login">login</Link></li>

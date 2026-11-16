@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from './Toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleFavoriteApi } from '../redux/userReducer';
@@ -18,7 +19,7 @@ export default function ProductCard({ product }) {
     e.stopPropagation();
     const token = localStorage.getItem(ACCESS_TOKEN);
     if (!token) {
-      alert('Vui lòng đăng nhập để thêm sản phẩm yêu thích!');
+      toast('Vui lòng đăng nhập để thêm sản phẩm yêu thích!');
       navigate('/login');
       return;
     }
@@ -32,14 +33,17 @@ export default function ProductCard({ product }) {
           type="button"
           className={`favorite-btn ${isLiked ? 'liked' : ''}`}
           onClick={handleToggleLike}
-          aria-label="Toggle favorite"
+          aria-label={isLiked ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
+          aria-pressed={Boolean(isLiked)}
         >
-          <i className={isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}></i>
+          <i className={isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'} aria-hidden="true"></i>
         </button>
         <Link to={`/detail/${product.id}`} className="product-img-wrap">
           <img
             src={imgUrl}
-            alt={product.name}
+            alt={product.name || 'Sản phẩm giày'}
+            width="165"
+            height="165"
             loading="lazy"
             onError={handleImageError}
           />

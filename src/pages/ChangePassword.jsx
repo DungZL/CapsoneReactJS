@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { changePasswordApi } from '../redux/userReducer';
 import { ACCESS_TOKEN } from '../services/config';
+import { toast } from '../components/Toast';
 
 // Tính năng ẩn: đổi mật khẩu ở màn hình riêng (POST /api/Users/changePassword)
 export default function ChangePassword() {
@@ -48,10 +49,10 @@ export default function ChangePassword() {
     const resultAction = await dispatch(changePasswordApi(form.newPassword));
     setSubmitting(false);
     if (changePasswordApi.fulfilled.match(resultAction)) {
-      alert('Đổi mật khẩu thành công!');
+      toast.success('Đổi mật khẩu thành công!');
       navigate('/profile');
     } else {
-      alert(resultAction.payload || 'Đổi mật khẩu thất bại!');
+      toast.error(resultAction.payload || 'Đổi mật khẩu thất bại!');
     }
   };
 
@@ -76,7 +77,8 @@ export default function ChangePassword() {
               type="button"
               className="eye-btn"
               onClick={() => setShowPass(!showPass)}
-              aria-label="Toggle password visibility"
+              aria-label={showPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-pressed={showPass}
             >
               <i className={`fa-regular ${showPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
             </button>

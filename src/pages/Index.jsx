@@ -81,7 +81,7 @@ export default function Index() {
             <div className="carousel-image">
               <img
                 src={resolveImage(activeBanner, activeBanner.id)}
-                alt={activeBanner.name}
+                alt={activeBanner.name || 'Sản phẩm giày'}
                 onError={handleImageError}
               />
             </div>
@@ -111,6 +111,7 @@ export default function Index() {
                 className={`dot ${idx === currentSlide ? 'active' : ''}`}
                 onClick={() => setCurrentSlide(idx)}
                 aria-label={`Slide ${idx + 1}`}
+                aria-current={idx === currentSlide ? 'true' : undefined}
               />
             ))}
           </div>

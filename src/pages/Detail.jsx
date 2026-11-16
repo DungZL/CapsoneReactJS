@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from '../components/Toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getProductByIdApi } from '../redux/productReducer';
@@ -39,7 +40,7 @@ export default function Detail() {
   const handleAddToCart = () => {
     if (!productDetail) return;
     if (!localStorage.getItem(ACCESS_TOKEN)) {
-      alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
+      toast('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
       navigate('/login');
       return;
     }
@@ -50,7 +51,7 @@ export default function Detail() {
         size: selectedSize,
       })
     );
-    alert(`Đã thêm ${quantity} x ${productDetail.name}${selectedSize ? ` (size ${selectedSize})` : ''} vào giỏ hàng!`);
+    toast.success(`Đã thêm ${quantity} x ${productDetail.name}${selectedSize ? ` (size ${selectedSize})` : ''} vào giỏ hàng!`);
   };
 
   if (loading && !productDetail) {
@@ -67,7 +68,9 @@ export default function Detail() {
         <div className="detail-image-box">
           <img
             src={resolveImage(productDetail, productDetail.id)}
-            alt={productDetail.name}
+            alt={productDetail.name || 'Sản phẩm giày'}
+            width="280"
+            height="280"
             onError={handleImageError}
           />
         </div>
@@ -76,13 +79,14 @@ export default function Detail() {
           <p className="detail-description">{productDetail.description}</p>
 
           <div className="detail-size-section">
-            <h4 className="available-size-title">Available size</h4>
-            <div className="size-list">
+            <h2 className="available-size-title" id="size-title">Available size</h2>
+            <div className="size-list" role="group" aria-labelledby="size-title">
               {productDetail.size?.map((sz) => (
                 <button
                   key={sz}
                   type="button"
                   className={`size-btn ${selectedSize === sz ? 'active' : ''}`}
+                  aria-pressed={selectedSize === sz}
                   onClick={() => setSelectedSize(sz)}
                 >
                   {sz}
@@ -94,11 +98,11 @@ export default function Detail() {
           <div className="detail-price">{productDetail.price}$</div>
 
           <div className="detail-quantity-controls">
-            <button type="button" className="qty-btn" onClick={handleIncrease}>
+            <button type="button" className="qty-btn" onClick={handleIncrease} aria-label="Tăng số lượng">
               +
             </button>
-            <span className="qty-value">{quantity}</span>
-            <button type="button" className="qty-btn" onClick={handleDecrease}>
+            <span className="qty-value" aria-live="polite">{quantity}</span>
+            <button type="button" className="qty-btn" onClick={handleDecrease} aria-label="Giảm số lượng">
               -
             </button>
           </div>
