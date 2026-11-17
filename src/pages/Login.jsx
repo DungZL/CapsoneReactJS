@@ -44,13 +44,13 @@ export default function Login() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!credentials.email.trim()) {
-      newErrors.email = 'Email không được bỏ trống';
+      newErrors.email = 'Email is required';
     } else if (!emailRegex.test(credentials.email)) {
-      newErrors.email = 'Email không đúng định dạng';
+      newErrors.email = 'Invalid email format';
     }
 
     if (!credentials.password) {
-      newErrors.password = 'Password không được bỏ trống';
+      newErrors.password = 'Password is required';
     }
 
     setErrors(newErrors);
@@ -79,13 +79,13 @@ export default function Login() {
     if (signinApi.fulfilled.match(resultAction)) {
       navigate('/profile');
     } else {
-      toast.error(resultAction.payload || 'Đăng nhập thất bại!');
+      toast.error(resultAction.payload || 'Login failed!');
     }
   };
 
   const handleFacebookLogin = () => {
     if (!window.FB) {
-      toast.error('Facebook SDK đang tải hoặc bị chặn bởi trình duyệt.');
+      toast.error('Facebook SDK is still loading or was blocked by the browser.');
       return;
     }
 
@@ -98,7 +98,7 @@ export default function Login() {
           if (facebookLoginApi.fulfilled.match(resultAction)) {
             navigate('/profile');
           } else {
-            toast.error(resultAction.payload || 'Đăng nhập Facebook thất bại!');
+            toast.error(resultAction.payload || 'Facebook login failed!');
           }
         }
       },
@@ -140,7 +140,7 @@ export default function Login() {
               type="button"
               className="eye-btn"
               onClick={() => setShowPass(!showPass)}
-              aria-label={showPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-label={showPass ? 'Hide password' : 'Show password'}
               aria-pressed={showPass}
             >
               <i className={`fa-regular ${showPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>

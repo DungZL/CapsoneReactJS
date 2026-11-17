@@ -35,7 +35,7 @@ export default function Footer() {
       </div>
       <div className="footer-bottom">
         <div className="container">
-          <p>© 2022 Cybersoft All Rights Reserved | Design Theme by Trương Tấn Khải.</p>
+          <p>© 2022 Cybersoft All Rights Reserved.</p>
         </div>
       </div>
     </footer>

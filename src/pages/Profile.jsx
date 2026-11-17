@@ -63,7 +63,7 @@ export default function Profile() {
     }
   }, [userProfile]);
 
-  // Giải phóng URL tạm của ảnh preview
+  // Release the temporary preview image URL
   useEffect(
     () => () => {
       if (avatarPreview) URL.revokeObjectURL(avatarPreview);
@@ -92,23 +92,23 @@ export default function Profile() {
 
     const resultAction = await dispatch(updateProfileApi(payload));
     if (updateProfileApi.fulfilled.match(resultAction)) {
-      toast.success('Cập nhật thông tin thành công!');
+      toast.success('Profile updated successfully!');
     } else {
-      toast.error(resultAction.payload || 'Cập nhật thất bại!');
+      toast.error(resultAction.payload || 'Update failed!');
     }
   };
 
-  // Tính năng ẩn: đổi avatar
+  // Hidden feature: change avatar
   const handleAvatarSelect = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      toast.error('Vui lòng chọn file hình ảnh!');
+      toast.error('Please select an image file!');
       return;
     }
     if (file.size > MAX_AVATAR_SIZE) {
-      toast.error('Ảnh tối đa 2MB!');
+      toast.error('Image must be 2MB or smaller!');
       return;
     }
 
@@ -118,14 +118,14 @@ export default function Profile() {
     setUploading(false);
     if (uploadAvatarApi.fulfilled.match(resultAction)) {
       setAvatarPreview(null);
-      toast.success('Đổi avatar thành công!');
+      toast.success('Avatar changed successfully!');
     } else {
       setAvatarPreview(null);
-      toast.error(resultAction.payload || 'Đổi avatar thất bại!');
+      toast.error(resultAction.payload || 'Failed to change avatar!');
     }
   };
 
-  // Phím mũi tên trái/phải chuyển tab (mẫu ARIA tabs)
+  // Left/right arrow keys switch tabs (ARIA tabs pattern)
   const handleTabKeyDown = (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     e.preventDefault();
@@ -156,7 +156,7 @@ export default function Profile() {
               className={`avatar-upload ${uploading ? 'uploading' : ''}`}
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              title="Đổi avatar"
+              title="Change avatar"
             >
               <img
                 src={avatarPreview || userProfile?.avatar || DEFAULT_AVATAR}
@@ -169,7 +169,7 @@ export default function Profile() {
               />
               <span className="avatar-overlay">
                 <i className="fa-solid fa-camera"></i>
-                {uploading ? 'Đang tải...' : 'Đổi avatar'}
+                {uploading ? 'Uploading...' : 'Change avatar'}
               </span>
             </button>
             <input
@@ -272,7 +272,7 @@ export default function Profile() {
 
         <hr className="page-divider" />
 
-        <div className="profile-tabs" role="tablist" aria-label="Thông tin tài khoản">
+        <div className="profile-tabs" role="tablist" aria-label="Account information">
           <button
             type="button"
             role="tab"
@@ -309,7 +309,7 @@ export default function Profile() {
             aria-labelledby="tab-orders"
           >
             {ordersHistory.length === 0 ? (
-              <p className="empty-text">Chưa có lịch sử đặt hàng.</p>
+              <p className="empty-text">No order history yet.</p>
             ) : (
               <>
                 {visibleOrders.map((order) => (
@@ -336,7 +336,7 @@ export default function Profile() {
                               <td>
                                 <img
                                   src={resolveImage(detail, idx)}
-                                  alt={detail.name || 'Sản phẩm giày'}
+                                  alt={detail.name || 'Shoe product'}
                                   className="table-product-img"
                                   onError={handleImageError}
                                 />
@@ -370,7 +370,7 @@ export default function Profile() {
             aria-labelledby="tab-favourite"
           >
             {productsFavorite.length === 0 ? (
-              <p className="empty-text">Chưa có sản phẩm yêu thích.</p>
+              <p className="empty-text">No favorite products yet.</p>
             ) : (
               <div className="product-grid">
                 {productsFavorite.map((fav) => (

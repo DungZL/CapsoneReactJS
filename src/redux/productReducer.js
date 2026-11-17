@@ -19,7 +19,7 @@ export const getProductsApi = createAsyncThunk(
   }
 );
 
-// GET /api/Product/getpaging?pageIndex=&pageSize=&keywords= (Tính năng ẩn: phân trang sản phẩm)
+// GET /api/Product/getpaging?pageIndex=&pageSize=&keywords= (Hidden feature: product pagination)
 export const getProductPagingApi = createAsyncThunk(
   'product/getProductPagingApi',
   async ({ pageIndex = 1, pageSize = 9, keywords = '' }, { rejectWithValue }) => {
@@ -87,9 +87,9 @@ const parseList = (value) => {
 };
 
 /**
- * Tính năng ẩn: lấy sản phẩm theo danh mục yêu thích.
- * Dựa vào danh sách sản phẩm đã like -> tìm danh mục xuất hiện nhiều nhất
- * (qua productList của getAllCategory) -> gọi getProductByCategory cho danh mục đó.
+ * Hidden feature: get products from the favorite category.
+ * Based on liked products -> find the most frequent category
+ * (via getAllCategory's productList) -> call getProductByCategory for that category.
  */
 export const getRecommendedByFavoriteApi = createAsyncThunk(
   'product/getRecommendedByFavoriteApi',

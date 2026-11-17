@@ -40,13 +40,13 @@ export default function Carts() {
   const handleSubmitOrder = async () => {
     const selectedItems = carts.filter((item) => item.checked);
     if (selectedItems.length === 0) {
-      toast('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng!');
+      toast('Please select at least 1 product to order!');
       return;
     }
 
     const email = userLogin?.email || userProfile?.email;
     if (!email) {
-      toast.error('Không tìm thấy thông tin email tài khoản, vui lòng đăng nhập lại!');
+      toast.error('Account email not found, please log in again!');
       return;
     }
 
@@ -61,10 +61,10 @@ export default function Carts() {
     const keys = selectedItems.map((item) => item.key);
     const actionResult = await dispatch(submitOrderApi({ payload, keys }));
     if (submitOrderApi.fulfilled.match(actionResult)) {
-      toast.success('Đặt hàng thành công!');
+      toast.success('Order placed successfully!');
       navigate('/profile');
     } else {
-      toast.error(actionResult.payload || 'Đặt hàng thất bại!');
+      toast.error(actionResult.payload || 'Failed to place order!');
     }
   };
 
@@ -99,7 +99,7 @@ export default function Carts() {
             {carts.length === 0 ? (
               <tr>
                 <td colSpan="9" className="empty-cart-cell">
-                  Giỏ hàng trống.
+                  Your cart is empty.
                 </td>
               </tr>
             ) : (
@@ -116,7 +116,7 @@ export default function Carts() {
                   <td>
                     <img
                       src={resolveImage(item, item.id)}
-                      alt={item.name || 'Sản phẩm giày'}
+                      alt={item.name || 'Shoe product'}
                       className="table-product-img"
                       onError={handleImageError}
                     />

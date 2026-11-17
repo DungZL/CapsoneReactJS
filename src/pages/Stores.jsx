@@ -6,7 +6,7 @@ import { resolveImage, handleImageError } from '../utils/productImages';
 
 const DEFAULT_CENTER = [10.7769, 106.7009]; // TP.HCM
 
-// API có bản ghi toạ độ sai (vd: 120.56, 1235.46) -> bỏ qua
+// The API has records with invalid coordinates (e.g. 120.56, 1235.46) -> skip them
 const toLatLng = (store) => {
   const lat = parseFloat(store.latitude);
   const lng = parseFloat(store.longtitude);
@@ -23,7 +23,7 @@ function FlyTo({ position }) {
   return null;
 }
 
-// Tính năng ẩn: load vị trí store lên map (GET /api/Product/getAllStore)
+// Hidden feature: show store locations on the map (GET /api/Product/getAllStore)
 export default function Stores() {
   const [stores, setStores] = useState([]);
   const [keyword, setKeyword] = useState('');
@@ -35,7 +35,7 @@ export default function Stores() {
     http
       .get('/Product/getAllStore')
       .then((res) => setStores(res.data.content || []))
-      .catch(() => setError('Không tải được danh sách cửa hàng.'))
+      .catch(() => setError('Could not load the store list.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -64,15 +64,15 @@ export default function Stores() {
           <input
             type="text"
             className="stores-search"
-            placeholder="Tìm cửa hàng, địa chỉ..."
-            aria-label="Tìm cửa hàng"
+            placeholder="Search stores, addresses..."
+            aria-label="Search stores"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
           {loading && <p className="loading-state">Loading stores...</p>}
           {error && <p className="empty-text">{error}</p>}
           {!loading && !error && filtered.length === 0 && (
-            <p className="empty-text">Không tìm thấy cửa hàng.</p>
+            <p className="empty-text">No stores found.</p>
           )}
           <ul className="stores-list">
             {filtered.map((store) => (
@@ -84,7 +84,7 @@ export default function Stores() {
                 >
                   <img
                     src={resolveImage(store, store.id)}
-                    alt={store.name || 'Cửa hàng'}
+                    alt={store.name || 'Store'}
                     onError={handleImageError}
                   />
                   <span>

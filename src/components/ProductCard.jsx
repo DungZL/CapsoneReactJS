@@ -19,7 +19,7 @@ export default function ProductCard({ product }) {
     e.stopPropagation();
     const token = localStorage.getItem(ACCESS_TOKEN);
     if (!token) {
-      toast('Vui lòng đăng nhập để thêm sản phẩm yêu thích!');
+      toast('Please log in to add favorite products!');
       navigate('/login');
       return;
     }
@@ -33,7 +33,7 @@ export default function ProductCard({ product }) {
           type="button"
           className={`favorite-btn ${isLiked ? 'liked' : ''}`}
           onClick={handleToggleLike}
-          aria-label={isLiked ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
+          aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
           aria-pressed={Boolean(isLiked)}
         >
           <i className={isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'} aria-hidden="true"></i>
@@ -41,7 +41,7 @@ export default function ProductCard({ product }) {
         <Link to={`/detail/${product.id}`} className="product-img-wrap">
           <img
             src={imgUrl}
-            alt={product.name || 'Sản phẩm giày'}
+            alt={product.name || 'Shoe product'}
             width="165"
             height="165"
             loading="lazy"

@@ -9,7 +9,7 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Search from './pages/Search';
 import ChangePassword from './pages/ChangePassword';
-// Trang bản đồ dùng Leaflet khá nặng -> tải khi cần
+// The Leaflet map page is heavy -> load it on demand
 const Stores = lazy(() => import('./pages/Stores'));
 
 export default function App() {

@@ -40,7 +40,7 @@ export default function Detail() {
   const handleAddToCart = () => {
     if (!productDetail) return;
     if (!localStorage.getItem(ACCESS_TOKEN)) {
-      toast('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
+      toast('Please log in to add products to your cart!');
       navigate('/login');
       return;
     }
@@ -51,7 +51,7 @@ export default function Detail() {
         size: selectedSize,
       })
     );
-    toast.success(`Đã thêm ${quantity} x ${productDetail.name}${selectedSize ? ` (size ${selectedSize})` : ''} vào giỏ hàng!`);
+    toast.success(`Added ${quantity} x ${productDetail.name}${selectedSize ? ` (size ${selectedSize})` : ''} to cart!`);
   };
 
   if (loading && !productDetail) {
@@ -68,7 +68,7 @@ export default function Detail() {
         <div className="detail-image-box">
           <img
             src={resolveImage(productDetail, productDetail.id)}
-            alt={productDetail.name || 'Sản phẩm giày'}
+            alt={productDetail.name || 'Shoe product'}
             width="280"
             height="280"
             onError={handleImageError}
@@ -98,11 +98,11 @@ export default function Detail() {
           <div className="detail-price">{productDetail.price}$</div>
 
           <div className="detail-quantity-controls">
-            <button type="button" className="qty-btn" onClick={handleIncrease} aria-label="Tăng số lượng">
+            <button type="button" className="qty-btn" onClick={handleIncrease} aria-label="Increase quantity">
               +
             </button>
             <span className="qty-value" aria-live="polite">{quantity}</span>
-            <button type="button" className="qty-btn" onClick={handleDecrease} aria-label="Giảm số lượng">
+            <button type="button" className="qty-btn" onClick={handleDecrease} aria-label="Decrease quantity">
               -
             </button>
           </div>

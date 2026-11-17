@@ -33,12 +33,12 @@ export default function Index() {
     }
   }, [dispatch]);
 
-  // Tính năng ẩn: phân trang sản phẩm bằng API getpaging
+  // Hidden feature: product pagination via the getpaging API
   useEffect(() => {
     dispatch(getProductPagingApi({ pageIndex, pageSize: PAGE_SIZE }));
   }, [pageIndex, dispatch]);
 
-  // Tính năng ẩn: sản phẩm theo danh mục yêu thích
+  // Hidden feature: products from the favorite category
   useEffect(() => {
     if (isLoggedIn && productsFavorite.length) {
       dispatch(getRecommendedByFavoriteApi(productsFavorite));
@@ -81,7 +81,7 @@ export default function Index() {
             <div className="carousel-image">
               <img
                 src={resolveImage(activeBanner, activeBanner.id)}
-                alt={activeBanner.name || 'Sản phẩm giày'}
+                alt={activeBanner.name || 'Shoe product'}
                 onError={handleImageError}
               />
             </div>
@@ -118,7 +118,7 @@ export default function Index() {
         </section>
       )}
 
-      {/* Gợi ý theo danh mục yêu thích (chỉ khi đã đăng nhập và có sản phẩm yêu thích) */}
+      {/* Recommendations by favorite category (only when logged in and has favorites) */}
       {isLoggedIn && productsFavorite.length > 0 && recommended.items.length > 0 && (
         <section className="product-feature-section">
           <div className="section-heading-banner">
@@ -126,7 +126,7 @@ export default function Index() {
           </div>
           <div className="container">
             <p className="section-note">
-              Vì bạn thích sản phẩm thuộc danh mục <strong>{recommended.category?.name}</strong>
+              Because you like products in the <strong>{recommended.category?.name}</strong> category
             </p>
             <div className="product-grid">
               {recommended.items.slice(0, 6).map((product) => (

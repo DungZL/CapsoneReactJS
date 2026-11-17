@@ -13,7 +13,7 @@ const getStoredJson = (key, fallback) => {
 
 const messageOf = (error, fallback) => error.response?.data?.message || fallback;
 
-// Mỗi dòng giỏ hàng = 1 sản phẩm + 1 size
+// Each cart row = 1 product + 1 size
 export const cartKeyOf = (id, size) => (size ? `${id}_${size}` : String(id));
 
 const saveLogin = (content) => {
@@ -29,7 +29,7 @@ export const signupApi = createAsyncThunk(
       const result = await http.post('/Users/signup', userRegister);
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(messageOf(error, 'Đăng ký thất bại!'));
+      return rejectWithValue(messageOf(error, 'Registration failed!'));
     }
   }
 );
@@ -43,7 +43,7 @@ export const signinApi = createAsyncThunk(
       saveLogin(result.data.content);
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(messageOf(error, 'Email hoặc mật khẩu không đúng!'));
+      return rejectWithValue(messageOf(error, 'Incorrect email or password!'));
     }
   }
 );
@@ -57,13 +57,13 @@ export const facebookLoginApi = createAsyncThunk(
       saveLogin(result.data.content);
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(messageOf(error, 'Đăng nhập Facebook thất bại!'));
+      return rejectWithValue(messageOf(error, 'Facebook login failed!'));
     }
   }
 );
 
 // POST /api/Users/getProfile (Profile)
-// Đề ghi getProfileV2 nhưng server hiện trả 404 cho endpoint đó, swagger chỉ còn getProfile.
+// The spec says getProfileV2, but the server returns 404 for it; swagger only lists getProfile.
 export const getProfileApi = createAsyncThunk(
   'user/getProfileApi',
   async (_, { rejectWithValue }) => {
@@ -71,7 +71,7 @@ export const getProfileApi = createAsyncThunk(
       const result = await http.post('/Users/getProfile');
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(messageOf(error, 'Không thể tải thông tin cá nhân!'));
+      return rejectWithValue(messageOf(error, 'Could not load profile information!'));
     }
   }
 );
@@ -85,12 +85,12 @@ export const updateProfileApi = createAsyncThunk(
       await dispatch(getProfileApi());
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(messageOf(error, 'Cập nhật thông tin thất bại!'));
+      return rejectWithValue(messageOf(error, 'Failed to update profile!'));
     }
   }
 );
 
-// POST /api/Users/changePassword { newPassword } (Tính năng ẩn: đổi mật khẩu)
+// POST /api/Users/changePassword { newPassword } (Hidden feature: change password)
 export const changePasswordApi = createAsyncThunk(
   'user/changePasswordApi',
   async (newPassword, { rejectWithValue }) => {
@@ -98,12 +98,12 @@ export const changePasswordApi = createAsyncThunk(
       const result = await http.post('/Users/changePassword', { newPassword });
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(messageOf(error, 'Đổi mật khẩu thất bại!'));
+      return rejectWithValue(messageOf(error, 'Failed to change password!'));
     }
   }
 );
 
-// POST /api/Users/uploadavatar (multipart/form-data) (Tính năng ẩn: đổi avatar)
+// POST /api/Users/uploadavatar (multipart/form-data) (Hidden feature: change avatar)
 export const uploadAvatarApi = createAsyncThunk(
   'user/uploadAvatarApi',
   async (file, { dispatch, rejectWithValue }) => {
@@ -114,7 +114,7 @@ export const uploadAvatarApi = createAsyncThunk(
       await dispatch(getProfileApi());
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(messageOf(error, 'Đổi avatar thất bại!'));
+      return rejectWithValue(messageOf(error, 'Failed to change avatar!'));
     }
   }
 );
@@ -157,29 +157,77 @@ export const submitOrderApi = createAsyncThunk(
       const result = await http.post('/Users/order', payload);
       return result.data.content;
     } catch (error) {
-      return rejectWithValue(messageOf(error, 'Đặt hàng thất bại!'));
+      return rejectWithValue(messageOf(error, 'Failed to place order!'));
     }
   }
 );
 
-// Giỏ hàng cũ (trước khi có size) chưa có key -> bổ sung
-const loadCarts = () =>
-  getStoredJson(CART_STORAGE, []).map((item) => ({
+// Each account has its own cart in localStorage: "carts_<email>"
+const cartStorageKey = (email) =>
+  email ? `${CART_STORAGE}_${String(email).trim().toLowerCase()}` : null;
+
+// Old carts (before sizes existed) have no key -> add one
+const loadCarts = (email) => {
+  const storageKey = cartStorageKey(email);
+  if (!storageKey) return [];
+  return getStoredJson(storageKey, []).map((item) => ({
     ...item,
     key: item.key || cartKeyOf(item.id, item.size),
   }));
+};
+
+const writeCarts = (email, carts) => {
+  const storageKey = cartStorageKey(email);
+  if (storageKey) localStorage.setItem(storageKey, JSON.stringify(carts));
+};
+
+// Merge cart rows of the same product + size (used when the account email is learned late)
+const mergeCarts = (base, extra) => {
+  const merged = base.map((item) => ({ ...item }));
+  extra.forEach((item) => {
+    const existing = merged.find((row) => row.key === item.key);
+    if (existing) existing.quantity += item.quantity;
+    else merged.push({ ...item });
+  });
+  return merged;
+};
+
+// The old shared "carts" key belonged to nobody in particular:
+// hand it to the user currently logged in (if they have no cart yet), then remove it.
+const migrateLegacyCart = (userLogin) => {
+  try {
+    const legacy = getStoredJson(CART_STORAGE, null);
+    if (!Array.isArray(legacy)) return;
+    const storageKey = cartStorageKey(userLogin?.email);
+    if (storageKey && localStorage.getItem(storageKey) === null) {
+      localStorage.setItem(storageKey, JSON.stringify(legacy));
+    }
+    localStorage.removeItem(CART_STORAGE);
+  } catch {
+    // localStorage unavailable -> nothing to migrate
+  }
+};
+
+const storedLogin = getStoredJson(USER_LOGIN, null);
+migrateLegacyCart(storedLogin);
 
 const initialState = {
-  userLogin: getStoredJson(USER_LOGIN, null),
+  userLogin: storedLogin,
   userProfile: null,
   productsFavorite: [],
-  carts: loadCarts(),
+  carts: loadCarts(storedLogin?.email),
   loading: false,
   error: null,
 };
 
-const saveCarts = (carts) => {
-  localStorage.setItem(CART_STORAGE, JSON.stringify(carts));
+const saveCarts = (state) => {
+  writeCarts(state.userLogin?.email, state.carts);
+};
+
+// After login: show only the cart that belongs to this account
+const setLoggedInUser = (state, userLogin) => {
+  state.userLogin = userLogin;
+  state.carts = loadCarts(userLogin?.email);
 };
 
 const findCartItem = (state, key) => state.carts.find((item) => item.key === key);
@@ -192,6 +240,8 @@ const userReducer = createSlice({
       state.userLogin = null;
       state.userProfile = null;
       state.productsFavorite = [];
+      // The cart stays saved under the account's key; just hide it from the next user
+      state.carts = [];
       localStorage.removeItem(ACCESS_TOKEN);
       localStorage.removeItem(USER_LOGIN);
     },
@@ -213,32 +263,32 @@ const userReducer = createSlice({
           checked: true,
         });
       }
-      saveCarts(state.carts);
+      saveCarts(state);
     },
     changeCartQuantityAction: (state, action) => {
       const { key, delta } = action.payload;
       const item = findCartItem(state, key);
       if (item && item.quantity + delta >= 1) {
         item.quantity += delta;
-        saveCarts(state.carts);
+        saveCarts(state);
       }
     },
     deleteCartItemAction: (state, action) => {
       state.carts = state.carts.filter((item) => item.key !== action.payload);
-      saveCarts(state.carts);
+      saveCarts(state);
     },
     toggleCheckCartItemAction: (state, action) => {
       const item = findCartItem(state, action.payload);
       if (item) {
         item.checked = !item.checked;
-        saveCarts(state.carts);
+        saveCarts(state);
       }
     },
     toggleCheckAllCartAction: (state, action) => {
       state.carts.forEach((item) => {
         item.checked = action.payload;
       });
-      saveCarts(state.carts);
+      saveCarts(state);
     },
   },
   extraReducers: (builder) => {
@@ -249,7 +299,7 @@ const userReducer = createSlice({
       })
       .addCase(signinApi.fulfilled, (state, action) => {
         state.loading = false;
-        state.userLogin = action.payload;
+        setLoggedInUser(state, action.payload);
       })
       .addCase(signinApi.rejected, (state, action) => {
         state.loading = false;
@@ -257,7 +307,7 @@ const userReducer = createSlice({
       })
       .addCase(facebookLoginApi.fulfilled, (state, action) => {
         state.loading = false;
-        state.userLogin = action.payload;
+        setLoggedInUser(state, action.payload);
       })
       .addCase(getProfileApi.pending, (state) => {
         state.loading = true;
@@ -267,8 +317,16 @@ const userReducer = createSlice({
         const profile = action.payload;
         state.userProfile = profile;
         if (profile?.email && state.userLogin) {
+          const previousKey = cartStorageKey(state.userLogin.email);
           state.userLogin = { ...state.userLogin, email: profile.email };
           localStorage.setItem(USER_LOGIN, JSON.stringify(state.userLogin));
+          // Login response had no email (e.g. Facebook): load this account's cart now,
+          // keeping anything added before the email was known
+          if (previousKey !== cartStorageKey(profile.email)) {
+            const unsaved = previousKey ? [] : state.carts;
+            state.carts = mergeCarts(loadCarts(profile.email), unsaved);
+            saveCarts(state);
+          }
         }
       })
       .addCase(getProfileApi.rejected, (state, action) => {
@@ -281,7 +339,7 @@ const userReducer = createSlice({
       .addCase(submitOrderApi.fulfilled, (state, action) => {
         const orderedKeys = action.meta.arg.keys;
         state.carts = state.carts.filter((item) => !orderedKeys.includes(item.key));
-        saveCarts(state.carts);
+        saveCarts(state);
       });
   },
 });

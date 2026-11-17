@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Trả về danh sách số trang có dấu "..." kiểu: 1 2 3 ... 9 10
+// Returns page numbers with "..." gaps, e.g. 1 2 3 ... 9 10
 const buildPages = (current, total) => {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   const pages = new Set([1, total, current - 1, current, current + 1]);

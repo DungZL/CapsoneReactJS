@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
-// Hệ thống thông báo nhẹ thay cho alert(): gọi toast('...') ở bất kỳ đâu,
-// <Toaster /> (đặt trong HomeTemplate) sẽ hiển thị và tự ẩn sau vài giây.
+// Lightweight notification system replacing alert(): call toast('...') anywhere,
+// <Toaster /> (placed in HomeTemplate) shows it and hides it after a few seconds.
 const DURATION = 3500;
 let listeners = [];
 let nextId = 1;
@@ -48,7 +48,7 @@ export default function Toaster() {
             type="button"
             className="toast-close"
             onClick={() => dismiss(t.id)}
-            aria-label="Đóng thông báo"
+            aria-label="Close notification"
           >
             <i className="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>

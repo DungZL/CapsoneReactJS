@@ -96,7 +96,7 @@ export default function Search() {
 
   return (
     <div className="search-page">
-      <h1 className="visually-hidden">Tìm kiếm sản phẩm</h1>
+      <h1 className="visually-hidden">Search products</h1>
       <div className="container search-top-bar">
         <form className="search-form" onSubmit={handleSearchSubmit}>
           <div className="search-input-group">
@@ -167,11 +167,11 @@ export default function Search() {
         {loading ? (
           <div className="loading-state">Searching products...</div>
         ) : searchProducts.length === 0 ? (
-          <p className="empty-text">Không tìm thấy sản phẩm phù hợp.</p>
+          <p className="empty-text">No matching products found.</p>
         ) : (
           <>
             <p className="section-note" aria-live="polite">
-              {searchProducts.length} sản phẩm · trang {safePage}/{totalPages}
+              {searchProducts.length} products · page {safePage}/{totalPages}
             </p>
             <div className="product-grid">
               {visibleProducts.map((product) => (

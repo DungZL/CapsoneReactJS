@@ -43,7 +43,7 @@ ul {
   background-color: rgba(98, 0, 238, 0.18);
 }
 
-/* Focus bàn phím rõ ràng, không ảnh hưởng khi click chuột */
+/* Clear keyboard focus, without affecting mouse clicks */
 a:focus-visible,
 button:focus-visible,
 select:focus-visible,
@@ -277,7 +277,7 @@ input[type='radio']:focus-visible,
   margin-top: 8px;
 }
 
-/* Vùng bấm 32px, chấm hiển thị vẫn 12px qua ::before */
+/* 32px hit area, visible dot stays 12px via ::before */
 .carousel-dots .dot {
   width: 32px;
   height: 32px;
@@ -1019,7 +1019,7 @@ input[type='radio']:focus-visible,
     grid-template-columns: 1fr;
   }
 
-  /* Header gọn trên điện thoại: chỉ giữ icon Search, thu khoảng cách */
+  /* Compact header on phones: keep only the Search icon, tighten spacing */
   .header-actions {
     gap: 14px;
   }
@@ -1036,7 +1036,7 @@ input[type='radio']:focus-visible,
     letter-spacing: 0.5px;
   }
 
-  /* Menu danh mục: chữ nhỏ hơn, cuộn ngang nếu vẫn không đủ chỗ */
+  /* Category menu: smaller text, scroll horizontally if it still does not fit */
   .header-nav-inner {
     gap: 18px;
     overflow-x: auto;
@@ -1069,7 +1069,7 @@ input[type='radio']:focus-visible,
   }
 }
 
-/* ===== Tính năng ẩn ===== */
+/* ===== Hidden features ===== */
 
 /* Pagination */
 .pagination {
@@ -1279,7 +1279,7 @@ input[type='radio']:focus-visible,
   overflow-wrap: anywhere;
 }
 
-/* Toast thông báo (thay alert) */
+/* Toast notifications (replace alert) */
 .toast-region {
   position: fixed;
   right: 20px;

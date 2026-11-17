@@ -16,7 +16,7 @@ export default function Header() {
   const handleCartClick = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      toast('Vui lòng đăng nhập để truy cập trang giỏ hàng!');
+      toast('Please log in to access your cart!');
       navigate('/login');
       return;
     }
@@ -42,7 +42,7 @@ export default function Header() {
               <span className="header-link-text">Search</span>
             </NavLink>
             <a href="/carts" onClick={handleCartClick} className="header-link cart-link"
-              aria-label={`Giỏ hàng, ${totalQuantity} sản phẩm`}
+              aria-label={`Cart, ${totalQuantity} items`}
             >
               <i className="fa-solid fa-cart-shopping" aria-hidden="true"></i> ({totalQuantity})
             </a>
@@ -68,7 +68,7 @@ export default function Header() {
           </div>
         </div>
       </div>
-      <nav className="header-nav" aria-label="Danh mục">
+      <nav className="header-nav" aria-label="Categories">
         <div className="container header-nav-inner">
           <NavLink
             to="/"

@@ -5,7 +5,7 @@ import { changePasswordApi } from '../redux/userReducer';
 import { ACCESS_TOKEN } from '../services/config';
 import { toast } from '../components/Toast';
 
-// Tính năng ẩn: đổi mật khẩu ở màn hình riêng (POST /api/Users/changePassword)
+// Hidden feature: change password on a separate screen (POST /api/Users/changePassword)
 export default function ChangePassword() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -23,14 +23,14 @@ export default function ChangePassword() {
   const validate = () => {
     const newErrors = {};
     if (!form.newPassword) {
-      newErrors.newPassword = 'Mật khẩu mới không được bỏ trống';
+      newErrors.newPassword = 'New password is required';
     } else if (form.newPassword.length < 6) {
-      newErrors.newPassword = 'Mật khẩu tối thiểu 6 ký tự';
+      newErrors.newPassword = 'Password must be at least 6 characters';
     }
     if (!form.confirmPassword) {
-      newErrors.confirmPassword = 'Vui lòng nhập lại mật khẩu mới';
+      newErrors.confirmPassword = 'Please confirm your new password';
     } else if (form.confirmPassword !== form.newPassword) {
-      newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+      newErrors.confirmPassword = 'Passwords do not match';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -49,10 +49,10 @@ export default function ChangePassword() {
     const resultAction = await dispatch(changePasswordApi(form.newPassword));
     setSubmitting(false);
     if (changePasswordApi.fulfilled.match(resultAction)) {
-      toast.success('Đổi mật khẩu thành công!');
+      toast.success('Password changed successfully!');
       navigate('/profile');
     } else {
-      toast.error(resultAction.payload || 'Đổi mật khẩu thất bại!');
+      toast.error(resultAction.payload || 'Failed to change password!');
     }
   };
 
@@ -77,7 +77,7 @@ export default function ChangePassword() {
               type="button"
               className="eye-btn"
               onClick={() => setShowPass(!showPass)}
-              aria-label={showPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-label={showPass ? 'Hide password' : 'Show password'}
               aria-pressed={showPass}
             >
               <i className={`fa-regular ${showPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
