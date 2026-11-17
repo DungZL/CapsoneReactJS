@@ -11,6 +11,9 @@ import {
 import { getProductFavoriteApi } from '../redux/userReducer';
 import { ACCESS_TOKEN } from '../services/config';
 import ProductCard from '../components/ProductCard';
+import Pagination from '../components/Pagination';
+
+const PAGE_SIZE = 9;
 
 export default function Search() {
   const dispatch = useDispatch();
@@ -25,6 +28,7 @@ export default function Search() {
   const [keyword, setKeyword] = useState(initialKeyword);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [sortOrder, setSortOrder] = useState('');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     dispatch(getAllCategoryApi());
@@ -38,6 +42,7 @@ export default function Search() {
     const cat = searchParams.get('category') || '';
     setKeyword(kw);
     setSelectedCategory(cat);
+    setPage(1);
 
     if (cat) {
       dispatch(getProductByCategoryApi(cat));
@@ -67,6 +72,7 @@ export default function Search() {
 
   const handleSortPrice = (order) => {
     setSortOrder(order);
+    setPage(1);
     if (!order) return;
     const sorted = _.orderBy(
       searchProducts,
@@ -76,8 +82,21 @@ export default function Search() {
     dispatch(setSearchProducts(sorted));
   };
 
+  const totalPages = Math.ceil(searchProducts.length / PAGE_SIZE);
+  const safePage = Math.min(page, Math.max(totalPages, 1));
+  const visibleProducts = searchProducts.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
+
+  const handlePageChange = (nextPage) => {
+    setPage(nextPage);
+    document.getElementById('search-results')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="search-page">
+      <h1 className="visually-hidden">Search products</h1>
       <div className="container search-top-bar">
         <form className="search-form" onSubmit={handleSearchSubmit}>
           <div className="search-input-group">
@@ -98,7 +117,7 @@ export default function Search() {
         </form>
       </div>
 
-      <div className="section-heading-banner">
+      <div className="section-heading-banner" id="search-results">
         <h2>Search result</h2>
       </div>
 
@@ -148,13 +167,19 @@ export default function Search() {
         {loading ? (
           <div className="loading-state">Searching products...</div>
         ) : searchProducts.length === 0 ? (
-          <p className="empty-text">Không tìm thấy sản phẩm phù hợp.</p>
+          <p className="empty-text">No matching products found.</p>
         ) : (
-          <div className="product-grid">
-            {searchProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <>
+            <p className="section-note" aria-live="polite">
+              {searchProducts.length} products · page {safePage}/{totalPages}
+            </p>
+            <div className="product-grid">
+              {visibleProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+            <Pagination current={safePage} total={totalPages} onChange={handlePageChange} />
+          </>
         )}
       </div>
     </div>

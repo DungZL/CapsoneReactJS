@@ -1,9 +1,10 @@
 import React from 'react';
+import { toast } from './Toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleFavoriteApi } from '../redux/userReducer';
 import { ACCESS_TOKEN } from '../services/config';
-import { GOOGLE_SHOE_IMAGES, resolveGoogleProductImage } from '../utils/productImages';
+import { resolveImage, handleImageError } from '../utils/productImages';
 
 export default function ProductCard({ product }) {
   const dispatch = useDispatch();
@@ -11,14 +12,14 @@ export default function ProductCard({ product }) {
   const { productsFavorite } = useSelector((state) => state.userReducer);
 
   const isLiked = productsFavorite?.some((fav) => Number(fav.id) === Number(product.id));
-  const imgUrl = resolveGoogleProductImage(product);
+  const imgUrl = resolveImage(product, product.id);
 
   const handleToggleLike = (e) => {
     e.preventDefault();
     e.stopPropagation();
     const token = localStorage.getItem(ACCESS_TOKEN);
     if (!token) {
-      alert('Vui lòng đăng nhập để thêm sản phẩm yêu thích!');
+      toast('Please log in to add favorite products!');
       navigate('/login');
       return;
     }
@@ -32,19 +33,19 @@ export default function ProductCard({ product }) {
           type="button"
           className={`favorite-btn ${isLiked ? 'liked' : ''}`}
           onClick={handleToggleLike}
-          aria-label="Toggle favorite"
+          aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
+          aria-pressed={Boolean(isLiked)}
         >
-          <i className={isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}></i>
+          <i className={isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'} aria-hidden="true"></i>
         </button>
         <Link to={`/detail/${product.id}`} className="product-img-wrap">
           <img
             src={imgUrl}
-            alt={product.name}
+            alt={product.name || 'Shoe product'}
+            width="165"
+            height="165"
             loading="lazy"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = GOOGLE_SHOE_IMAGES[0];
-            }}
+            onError={handleImageError}
           />
         </Link>
         <div className="product-info">
@@ -60,7 +61,9 @@ export default function ProductCard({ product }) {
         <Link to={`/detail/${product.id}`} className="btn-buy-now">
           Buy now
         </Link>
-        <span className="product-price">{product.price}$</span>
+        <span className="product-price">
+          {product.price !== undefined && product.price !== null ? `${product.price}$` : ''}
+        </span>
       </div>
     </div>
   );

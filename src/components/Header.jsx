@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from './Toast';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutAction } from '../redux/userReducer';
@@ -15,7 +16,7 @@ export default function Header() {
   const handleCartClick = (e) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      alert('Vui lòng đăng nhập để truy cập trang giỏ hàng!');
+      toast('Please log in to access your cart!');
       navigate('/login');
       return;
     }
@@ -37,10 +38,13 @@ export default function Header() {
           </NavLink>
           <div className="header-actions">
             <NavLink to="/search" className="header-link search-link">
-              <i className="fa-solid fa-magnifying-glass"></i> Search
+              <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>{' '}
+              <span className="header-link-text">Search</span>
             </NavLink>
-            <a href="/carts" onClick={handleCartClick} className="header-link cart-link">
-              <i className="fa-solid fa-cart-shopping"></i> ({totalQuantity})
+            <a href="/carts" onClick={handleCartClick} className="header-link cart-link"
+              aria-label={`Cart, ${totalQuantity} items`}
+            >
+              <i className="fa-solid fa-cart-shopping" aria-hidden="true"></i> ({totalQuantity})
             </a>
             {isLoggedIn ? (
               <>
@@ -64,7 +68,7 @@ export default function Header() {
           </div>
         </div>
       </div>
-      <nav className="header-nav">
+      <nav className="header-nav" aria-label="Categories">
         <div className="container header-nav-inner">
           <NavLink
             to="/"
@@ -84,6 +88,12 @@ export default function Header() {
           </NavLink>
           <NavLink to="/search?category=ADIDAS" className="nav-item">
             Sport
+          </NavLink>
+          <NavLink
+            to="/stores"
+            className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+          >
+            Stores
           </NavLink>
         </div>
       </nav>

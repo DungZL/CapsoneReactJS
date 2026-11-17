@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from '../components/Toast';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { signupApi } from '../redux/userReducer';
@@ -26,31 +27,31 @@ export default function Register() {
     const phoneRegex = /^[0-9]{9,11}$/;
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email không được bỏ trống';
+      newErrors.email = 'Email is required';
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Email không đúng định dạng';
+      newErrors.email = 'Invalid email format';
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password không được bỏ trống';
+      newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password tối thiểu 6 ký tự';
+      newErrors.password = 'Password must be at least 6 characters';
     }
 
     if (!formData.passwordConfirm) {
-      newErrors.passwordConfirm = 'Password confirm không được bỏ trống';
+      newErrors.passwordConfirm = 'Password confirmation is required';
     } else if (formData.passwordConfirm !== formData.password) {
-      newErrors.passwordConfirm = 'Mật khẩu xác nhận không khớp';
+      newErrors.passwordConfirm = 'Passwords do not match';
     }
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Name không được bỏ trống';
+      newErrors.name = 'Name is required';
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone không được bỏ trống';
+      newErrors.phone = 'Phone is required';
     } else if (!phoneRegex.test(formData.phone)) {
-      newErrors.phone = 'Phone phải là số từ 9 - 11 chữ số';
+      newErrors.phone = 'Phone must be 9 - 11 digits';
     }
 
     setErrors(newErrors);
@@ -82,10 +83,10 @@ export default function Register() {
 
     const resultAction = await dispatch(signupApi(payload));
     if (signupApi.fulfilled.match(resultAction)) {
-      alert('Đăng ký tài khoản thành công!');
+      toast.success('Account registered successfully!');
       navigate('/login');
     } else {
-      alert(resultAction.payload || 'Đăng ký thất bại!');
+      toast.error(resultAction.payload || 'Registration failed!');
     }
   };
 
@@ -125,7 +126,8 @@ export default function Register() {
                   type="button"
                   className="eye-btn"
                   onClick={() => setShowPass(!showPass)}
-                  aria-label="Toggle password visibility"
+                  aria-label={showPass ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPass}
                 >
                   <i className={`fa-regular ${showPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                 </button>
@@ -148,7 +150,8 @@ export default function Register() {
                   type="button"
                   className="eye-btn"
                   onClick={() => setShowConfirmPass(!showConfirmPass)}
-                  aria-label="Toggle confirm password visibility"
+                  aria-label={showConfirmPass ? 'Hide password confirmation' : 'Show password confirmation'}
+                  aria-pressed={showConfirmPass}
                 >
                   <i className={`fa-regular ${showConfirmPass ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                 </button>
